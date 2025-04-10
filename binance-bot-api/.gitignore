@@ -1,0 +1,27 @@
+# Node modules
+node_modules/
+
+# Environment config (API keys etc.)
+.env
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs / Editors
+.vscode/
+../.idea/
+
+# Build / dist (if any)
+dist/
+build/
+
+# Optional: If you're using Laragon and WordPress
+vendor/
+wp-content/uploads/
+wp-content/cache/
