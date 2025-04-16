@@ -1,24 +1,44 @@
-// index.js
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const bot = require('./bot/trade');
+const WebSocket = require('ws');
 
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.get('/status', async (req, res) => {
-	const status = await bot.getBotStatus();
-	res.json(status);
+const wss = new WebSocket.Server({port: 5000}, () => {
+	console.log('WebSocket server started on port 5000');
 });
 
-app.post('/trade', async (req, res) => {
-	const { action } = req.body; // "buy" or "sell"
-	const result = await bot.manualTrade(action);
-	res.json(result);
-});
+let pair = 'btcusdt';
+const binanceSocket = new WebSocket(`wss://stream.binance.com:9443/ws/${pair}@trade`);
+let latestMessage = null;
 
-app.listen(process.env.PORT, () => {
-	console.log(`Bot API running on port ${process.env.PORT}`);
-});
+
+binanceSocket.onmessage = (event) => {
+	latestMessage = JSON.parse(event.data);
+
+};
+
+binanceSocket.onopen = (e) => {
+	console.log('Open Binance ws connection!');
+
+}
+
+binanceSocket.onerror = (err) => {
+	console.error('❌ Binance WS Error:', err.message);
+};
+
+setInterval(() => {
+	if (!latestMessage) {
+		return;
+	}
+	wss.clients.forEach(client=>{
+		if(client.readyState === WebSocket.OPEN) {
+			console.log(latestMessage)
+			client.send(JSON.stringify(latestMessage));
+		}
+
+	})
+	console.log('📤 Sent trade data:', latestMessage);
+	latestMessage = null; // Clear after sending
+
+}, 3000);
+
+wss.on('connection', (ws) => {
+	console.log('Frontend client has connected!');
+})
